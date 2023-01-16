@@ -31,7 +31,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USpringArmComponent* SpringArmComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UCameraComponent* CameraComponent;
 
 	// 총알 공장
@@ -41,9 +41,11 @@ public:
 	// class UClass* BulletFactory;
 
 	// 총 스켈레탈 메시 컴포넌트
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class USkeletalMeshComponent* GunMeshComponent;
 
+	UPROPERTY(EditAnywhere)
+	float FireInterval = 0.5f;
 
 	void OnAxisHorizontal(float value);
 	void OnAxisVertical(float value);
@@ -59,4 +61,7 @@ public:
 private:
 	FVector direction;
 	float WalkSpeed = 600.f;
+
+	FTimerHandle FireTimerHandle;
+
 };

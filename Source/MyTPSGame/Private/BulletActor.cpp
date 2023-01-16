@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "../MyTPSGame.h"
 
 // Sets default values
 ABulletActor::ABulletActor()
@@ -50,6 +51,29 @@ void ABulletActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Life Span 설정을 통해 액터를 삭제하는 방법
+	// SetLifeSpan(2);
+
+	//// 타이머를 통해 액터를 삭제하는 방법
+	//FTimerHandle DieTimerHandle;
+	//GetWorld()->GetTimerManager().SetTimer(DieTimerHandle, this, &ABulletActor::OnDie, 2.f);
+	//// GetWorldTimerManager().SetTimer()
+ 
+
+	// Lambda 함수 & 무명 함수
+	// auto FuncName = [메모리 상에서 캡처할 대상](함수의 매개변수)->반환타입{구현}
+	// auto : 자료형을 지금이 아니라 런타임에 결정
+	/*캡처한 대상은 함수에서 사용할 수 있다
+	int number = 1;
+	auto myPrint = [number]()->void{int b = number;};*/
+	auto MyPlus = [this](int a, int b)->int{ return a + b; };
+	PRINT_LOG(TEXT("%d"), MyPlus(10, 20));
+
+
+
+	// 람다식을 활용해 액터를 삭제하는 방법
+	FTimerHandle DieTimerHandle;
+	GetWorldTimerManager().SetTimer(DieTimerHandle, FTimerDelegate::CreateLambda([this]()->void{this->Destroy();}), 2.f, false);
 }
 
 // Called every frame
@@ -59,3 +83,7 @@ void ABulletActor::Tick(float DeltaTime)
 
 }
 
+void ABulletActor::OnDie()
+{
+	Destroy();
+}

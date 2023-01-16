@@ -152,12 +152,15 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
+	// DoFire();
+
+	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ATPSPlayer::DoFire, FireInterval, true);
 	DoFire();
 }
 
 void ATPSPlayer::OnActionFireReleased()
 {
-
+	GetWorldTimerManager().ClearTimer(FireTimerHandle);
 }
 
 void ATPSPlayer::DoFire()
@@ -169,6 +172,7 @@ void ATPSPlayer::DoFire()
 
 	// 총 스켈레탈에서 생성한 총알 발사 위치 소켓의 Transform 데이터를 받아와서 저장
 	FTransform FirePosition = GunMeshComponent->GetSocketTransform(TEXT("FirePosition"));
+	// FirePosition.SetRotation(FQuat(GetControlRotation()));
 
 	// 총알 액터 생성
 	GetWorld()->SpawnActor<ABulletActor>(BulletFactory, FirePosition);

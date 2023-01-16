@@ -34,4 +34,8 @@ public:
 	// Projectile Component
 	UPROPERTY(EditAnywhere)
 	class UProjectileMovementComponent* ProjectileComponent;
+
+	// 액터 삭제 함수
+	UFUNCTION()
+	void OnDie();
 };
