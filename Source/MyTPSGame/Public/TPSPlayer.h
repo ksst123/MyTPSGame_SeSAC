@@ -8,6 +8,9 @@
 
 // class USpringArmComponent; => 원래 정석의 전방선언(Forward Declaration) 방식
 
+#define GRENADE_GUN true
+#define SNIPER_GUN false
+
 UCLASS()
 class MYTPSGAME_API ATPSPlayer : public ACharacter
 {
@@ -44,8 +47,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class USkeletalMeshComponent* GunMeshComponent;
 
+	// 저격총 스태틱 메시 컴포넌트
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UStaticMeshComponent* SniperMeshComponent;
+
+	// 위젯 공장에서 위젯을 생성(Crosshair, Sniper)
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> CrosshairFactory;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> SniperFactory;
+
+	UPROPERTY()
+	class UUserWidget* CrosshairUI;
+
+	UPROPERTY()
+	class UUserWidget* SniperUI;
+
 	UPROPERTY(EditAnywhere)
 	float FireInterval = 0.5f;
+
+
 
 	void OnAxisHorizontal(float value);
 	void OnAxisVertical(float value);
@@ -54,9 +76,19 @@ public:
 	void OnActionJump();
 	void OnActionFirePressed();
 	void OnActionFireReleased();
+
+	// 1번 키와 2번 키에 대한 총교체 입력처리 함수
+	void OnActionGrenade();
+	void OnActionSniper();
 	
 	// 실제로 총알을 발사하는 함수
 	void DoFire();
+
+	void ChooseGun(bool bGrenade);
+
+	// Zoom In / Out 구현 함수들
+	void OnActionZoomIn(); // 확대 (FOV 30)
+	void OnActionZoomOut(); // 축소 (FOV 90)
 
 private:
 	FVector direction;
@@ -64,4 +96,5 @@ private:
 
 	FTimerHandle FireTimerHandle;
 
+	bool bChooseGrenadeGun;
 };

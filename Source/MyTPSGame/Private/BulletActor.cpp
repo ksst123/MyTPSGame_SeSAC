@@ -53,6 +53,7 @@ void ABulletActor::BeginPlay()
 	
 	// Life Span 설정을 통해 액터를 삭제하는 방법
 	// SetLifeSpan(2);
+	// InitialLifeSpan = 2;
 
 	//// 타이머를 통해 액터를 삭제하는 방법
 	//FTimerHandle DieTimerHandle;
@@ -66,8 +67,8 @@ void ABulletActor::BeginPlay()
 	/*캡처한 대상은 함수에서 사용할 수 있다
 	int number = 1;
 	auto myPrint = [number]()->void{int b = number;};*/
-	auto MyPlus = [this](int a, int b)->int{ return a + b; };
-	PRINT_LOG(TEXT("%d"), MyPlus(10, 20));
+	/*auto MyPlus = [this](int a, int b)->int{ return a + b; };
+	PRINT_LOG(TEXT("%d"), MyPlus(10, 20));*/
 
 
 
