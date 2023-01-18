@@ -43,6 +43,10 @@ public:
 	// UClass를 사용해도 위와 같은 구현이 가지하지만, UClass의 범위가 너무 넓어 문제가 발생할 수 있기 때문에 TSubobject<>로 정확히 범위를 정해준다.
 	// class UClass* BulletFactory;
 
+	// 총알 충돌 이펙트 공장
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* BulletEffectFactory;
+
 	// 총 스켈레탈 메시 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class USkeletalMeshComponent* GunMeshComponent;
@@ -66,6 +70,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float FireInterval = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadonly)
+	bool bChooseGrenadeGun;
 
 
 
@@ -96,5 +103,5 @@ private:
 
 	FTimerHandle FireTimerHandle;
 
-	bool bChooseGrenadeGun;
+
 };

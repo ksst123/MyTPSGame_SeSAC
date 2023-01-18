@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BulletActor.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -184,10 +185,56 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
-	// DoFire();
+	// 만약 Grenade 총이라면
+	if (bChooseGrenadeGun)
+	{
+		GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ATPSPlayer::DoFire, FireInterval, true);
+		DoFire();
+	}
+	// 그렇지 않다면
+	else
+	{
+		FHitResult HitInfo;
+		FVector StartTrace = CameraComponent->GetComponentLocation();
+		FVector EndTrace = StartTrace + CameraComponent->GetForwardVector() * 100000;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
 
-	GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ATPSPlayer::DoFire, FireInterval, true);
-	DoFire();
+		/*FCollisionObjectQueryParams ObjParams;
+		ObjParams.AddObjectTypesToQuery(ECollisionChannel::);
+		GetWorld()->LineTraceSingleByObjectType();*/
+		
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(HitInfo, StartTrace, EndTrace, ECollisionChannel::ECC_Visibility, CollisionParams);
+		// UKismetSystemLibrary::SphereTraceSingle();
+
+		// 만약 충돌한 것이 있다면
+		if (bHit)
+		{
+
+
+
+			// 총알 충돌 위치에 이펙트 생성
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BulletEffectFactory, HitInfo.ImpactPoint);
+			
+			 
+			// 충돌한 컴포넌트 정보를 변수에 담기
+			UPrimitiveComponent* HitComp = HitInfo.GetComponent();
+			// 충돌한 오브젝트와 상호작용(충돌한 대상이 물리작용을 한다면)
+			if (HitComp && HitComp->IsSimulatingPhysics())
+			{
+				// 힘을 가한다.
+				FVector ForceDir = (HitInfo.TraceEnd - HitInfo.TraceStart).GetSafeNormal();
+				// ForceDir.Normalize();
+				FVector Force = ForceDir * 1000000 * HitComp->GetMass();
+				HitComp->AddForce(Force);
+			}
+		}
+
+		DoFire();
+	}
+
+
 }
 
 void ATPSPlayer::OnActionFireReleased()
