@@ -8,6 +8,8 @@
 #include "BulletActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Enemy.h"
+#include "EnemyFSM.h"
 
 
 // Sets default values
@@ -216,6 +218,16 @@ void ATPSPlayer::OnActionFirePressed()
 
 			// 총알 충돌 위치에 이펙트 생성
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BulletEffectFactory, HitInfo.ImpactPoint);
+			
+			// 만약 충돌 대상이 Enemy 라면
+			AEnemy* enemy = Cast<AEnemy>(HitInfo.GetActor()); // auto enemy
+			if (enemy != nullptr) // if(enemy && enemy->IsA(AEnemy::StaticClass()))
+			{
+				// Enemy에게 데미지를 준다
+				enemy->EnemyFSM->OnDamageProcess(1);
+				/*UEnemyFSM* fsm = Cast<UEnemyFSM>(enemy->GetDefaultSubobjectByName(TEXT("Enemy FSM")));
+				fsm->OnDamageProcess(1);*/
+			}
 			
 			 
 			// 충돌한 컴포넌트 정보를 변수에 담기
