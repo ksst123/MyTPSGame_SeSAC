@@ -7,6 +7,7 @@
 #include "Enemy.h"
 #include "../MyTPSGame.h"
 #include "Components/CapsuleComponent.h"
+#include "EnemyAnim.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -38,6 +39,13 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	// owner의 EnemyAnim의 state에 내 state를 넣어주고 싶다.
+	/*if (owner->EnemyAnim != nullptr)
+	{
+		owner->EnemyAnim->state = this->state;
+	}*/
+	
+
 	switch (state)
 	{
 	case EEnemyState::IDLE:
@@ -58,6 +66,18 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	}
 }
 
+void UEnemyFSM::OnHitEvent()
+{
+	owner->EnemyAnim->bAttackPlay = false;
+
+	// 공격 (조건: 공격거리 안에 있는가?)
+	float dist = player->GetDistanceTo(owner);
+	if (dist <= AttackRange)
+	{
+		PRINT_LOG(TEXT("Enemy is attacking!"));
+	}
+}
+
 /// <summary>
 /// 대기, 플레이어를 찾으면 이동으로 전이
 /// </summary>
@@ -69,7 +89,7 @@ void UEnemyFSM::TickIdle()
 	if (player != nullptr)
 	{
 		// 이동으로 전이
-		state = EEnemyState::MOVE;
+		SetState(EEnemyState::MOVE);
 	}
 	
 }
@@ -104,7 +124,7 @@ void UEnemyFSM::TickMove()
 	if (dist < AttackRange)
 	{
 		// 공격 상태로 전이
-		state = EEnemyState::ATTACK;
+		SetState(EEnemyState::ATTACK);
 	}
 	
 	
@@ -117,19 +137,13 @@ void UEnemyFSM::TickAttack()
 	currentTime += GetWorld()->GetDeltaSeconds();
 
 	// 현재 시간이 공격 시간을 초과하면
-	if (!bAttackPlay && currentTime > 0.1f)
+	/*if (!bAttackPlay && currentTime > 0.1f)
 	{
 		bAttackPlay = true;
-		// 공격 (조건: 공격거리 안에 있는가?)
-		float dist = player->GetDistanceTo(owner);
-		if (dist <= AttackRange)
-		{
-			PRINT_LOG(TEXT("Enemy is attacking!"));
-		}
-	}
+	}*/
 	
 	// 공격 동작이 종료되면
-	if (currentTime > 2.f)
+	if (currentTime > AttackDelayTime)
 	{
 		// 계속 공격할 것인지 판단
 		float dist = player->GetDistanceTo(owner);
@@ -137,12 +151,13 @@ void UEnemyFSM::TickAttack()
 		if (dist > AttackRange)
 		{
 			// 이동 상태로 전이
-			state = EEnemyState::MOVE;
+			SetState(EEnemyState::MOVE);
 		}
 		else // 공격거리 안에 있으면 계속해서 공격
 		{
 			currentTime = 0.f;
 			bAttackPlay = false;
+			owner->EnemyAnim->bAttackPlay = true;
 		}
 	}
 	
@@ -155,7 +170,7 @@ void UEnemyFSM::TickDamage()
 	currentTime += GetWorld()->GetDeltaSeconds();
 	if (currentTime > 1.f)
 	{
-		state = EEnemyState::IDLE;
+		SetState(EEnemyState::IDLE);
 		currentTime = 0;
 	}
 }
@@ -174,6 +189,12 @@ void UEnemyFSM::TickDie()
 	}
 }
 
+void UEnemyFSM::SetState(EEnemyState next)
+{
+	state = next;
+	owner->EnemyAnim->state = next;
+}
+
 // 플레이어에게 맞았다.
 void UEnemyFSM::OnDamageProcess(int DamageValue)
 {
@@ -183,13 +204,13 @@ void UEnemyFSM::OnDamageProcess(int DamageValue)
 	if (currentHP <= 0)
 	{
 		// 에너미 사망
-		state = EEnemyState::DIE;
+		SetState(EEnemyState::DIE);
 		owner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else // 그렇지 않으면
 	{
 		// Damage 한다
-		state = EEnemyState::DAMAGE;
+		SetState(EEnemyState::DAMAGE);
 	}
 
 

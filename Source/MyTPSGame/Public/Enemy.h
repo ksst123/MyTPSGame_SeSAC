@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -28,4 +28,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FSM")
 	class UEnemyFSM* EnemyFSM;
+
+	UPROPERTY()
+	class UEnemyAnim* EnemyAnim;
+
+	// 선언과 호출은 C++에서, 구현은 블루프린트에서 하는 함수
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMyDamage(FName SectionName); // player가 enemy를 공격
 };

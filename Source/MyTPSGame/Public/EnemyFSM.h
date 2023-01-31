@@ -39,12 +39,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackRange = 200.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackDelayTime = 3.f;
 
 	void OnDamageProcess(int DamageValue);
 
 	// 에너미 체력
 	int currentHP;
 	int maxHP = 2;
+
+	void OnHitEvent();
 
 private:
 	void TickIdle();
@@ -53,6 +57,8 @@ private:
 	void TickDamage();
 	void TickDie();
 
+	void SetState(EEnemyState next);
+
 	class ATPSPlayer* player; // caching
 
 	class AEnemy* owner;
@@ -60,4 +66,5 @@ private:
 	float currentTime = 0.f;
 
 	bool bAttackPlay;
+
 };

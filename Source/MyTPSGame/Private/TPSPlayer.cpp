@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Enemy.h"
 #include "EnemyFSM.h"
+#include "TPSPlayerAnim.h"
 
 
 // Sets default values
@@ -29,7 +30,6 @@ ATPSPlayer::ATPSPlayer()
 	{
 		// 캐릭터 외형을 수동으로 설정
 		GetMesh()->SetSkeletalMesh(CharacterSkeletal.Object);
-
 		// 캐릭터 Transform 수정
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -90.f), FRotator(0.f, -90.f, 0.f));
 		// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
@@ -60,6 +60,8 @@ ATPSPlayer::ATPSPlayer()
 	// 카메라 움직임 살짝 느리게
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
 
 	// Gun Mesh Component 생성
 	GunMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gun Mesh"));
@@ -73,7 +75,8 @@ ATPSPlayer::ATPSPlayer()
 		// 읽은 총 메시 애셋을 Gun Mesh Component에 넣기
 		GunMeshComponent->SetSkeletalMesh(GunMesh.Object);
 		// Gun Mesh Component 위치 설정
-		GunMeshComponent->SetRelativeLocationAndRotation(FVector(0.f, 50.f, 130.f), FRotator(0.f));
+		GunMeshComponent->SetRelativeLocationAndRotation(FVector(-16.156039, 42.550698, 128.479177), FRotator(-0.470297, 5.066306, 1.584315));
+		GunMeshComponent->SetupAttachment(this->GetMesh(), TEXT("GunSocket"));
 	}
 
 	// Sniper Mesh Component 생성
@@ -87,8 +90,16 @@ ATPSPlayer::ATPSPlayer()
 	{
 		// 읽은 저격 총 메시 애셋을 Sniper Mesh Component에 넣기
 		SniperMeshComponent->SetStaticMesh(SniperMesh.Object);
-		SniperMeshComponent->SetRelativeLocationAndRotation(FVector(0.f, 90.f, 140.f), FRotator(0.f));
+		SniperMeshComponent->SetRelativeLocationAndRotation(FVector(-18.080458, 72.236662, 132.622571), FRotator(1.341071, 0.420521, -0.576818));
 		SniperMeshComponent->SetRelativeScale3D(FVector(0.15f));
+		SniperMeshComponent->SetupAttachment(this->GetMesh(), TEXT("GunSocket"));
+	}
+
+
+	ConstructorHelpers::FObjectFinder<USoundWave> TempFireSound(TEXT("/Script/Engine.SoundWave'/Game/SniperGun/Rifle.Rifle'"));
+	if (TempFireSound.Succeeded())
+	{
+		FireSound = TempFireSound.Object;
 	}
 }
 
@@ -156,6 +167,14 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	// 줌인/줌아웃 액션 연결
 	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Pressed, this, &ATPSPlayer::OnActionZoomIn);
 	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Released, this, &ATPSPlayer::OnActionZoomOut);
+
+	// 달리기 액션 연결
+	PlayerInputComponent->BindAction(TEXT("Run"), IE_Pressed, this, &ATPSPlayer::OnActionRunPressed);
+	PlayerInputComponent->BindAction(TEXT("Run"), IE_Released, this, &ATPSPlayer::OnActionRunReleased);
+
+	// 살금살금 걷기 액션 연결
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ATPSPlayer::OnActionCrouchPressed);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchPressed);
 }
 
 void ATPSPlayer::OnAxisHorizontal(float value)
@@ -180,6 +199,26 @@ void ATPSPlayer::OnAxisTurnRight(float value)
 	AddControllerYawInput(value);
 }
 
+void ATPSPlayer::OnActionRunPressed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+}
+
+void ATPSPlayer::OnActionRunReleased()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void ATPSPlayer::OnActionCrouchPressed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+}
+
+void ATPSPlayer::OnActionCrouchReleased()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
 void ATPSPlayer::OnActionJump()
 {
 	Jump();
@@ -187,6 +226,30 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
+	// 카메라 진동
+	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+
+	// 카메라 진동
+	/*auto controller = Cast<APlayerController>(GetController());
+	controller->PlayerCameraManager;*/
+
+	CameraManager->StartCameraShake(CameraShakeFactory);
+	// 만약 카메라가 이미 진동 중이면(=만약 canShakeInstance가 nullptr이 아니고, 진동중이라면)
+	if (canShakeInstance != nullptr && !(canShakeInstance->IsFinished()))
+	{
+		// 취소하고
+		CameraManager->StopCameraShake(canShakeInstance);
+	}
+	// 카메라 진동
+	canShakeInstance = CameraManager->StartCameraShake(CameraShakeFactory);
+
+	// 총쏘는 애니메이션 재생
+	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
+	anim->OnFire();
+
+	// 총소리 재생
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, GetActorLocation());
+
 	// 만약 Grenade 총이라면
 	if (bChooseGrenadeGun)
 	{
@@ -227,6 +290,20 @@ void ATPSPlayer::OnActionFirePressed()
 				enemy->EnemyFSM->OnDamageProcess(1);
 				/*UEnemyFSM* fsm = Cast<UEnemyFSM>(enemy->GetDefaultSubobjectByName(TEXT("Enemy FSM")));
 				fsm->OnDamageProcess(1);*/
+
+
+			/*if (FMath::RandRange(0, 100) > 50)
+				{
+					enemy->OnMyDamage(TEXT("Damage0"));
+				}
+				else
+				{
+					enemy->OnMyDamage(TEXT("Damage1"));
+				}*/	
+
+				int index = FMath::RandRange(0, 1);
+				FString SectionName = FString::Printf(TEXT("Damage%d"), index);
+				enemy->OnMyDamage(FName(*SectionName));
 			}
 			
 			 
@@ -330,4 +407,3 @@ void ATPSPlayer::OnActionZoomOut()
 	CrosshairUI->AddToViewport();
 	SniperUI->RemoveFromParent();
 }
-

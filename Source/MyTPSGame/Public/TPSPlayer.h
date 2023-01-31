@@ -74,12 +74,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadonly)
 	bool bChooseGrenadeGun;
 
+	UPROPERTY(EditAnywhere)
+	class USoundWave* FireSound;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCameraShakeBase> CameraShakeFactory;
+
+	UPROPERTY()
+	class UCameraShakeBase* canShakeInstance;
 
 
 	void OnAxisHorizontal(float value);
 	void OnAxisVertical(float value);
 	void OnAxisLookUp(float value);
 	void OnAxisTurnRight(float value);
+	void OnActionRunPressed();
+	void OnActionRunReleased();
+	void OnActionCrouchPressed();
+	void OnActionCrouchReleased();
+
 	void OnActionJump();
 	void OnActionFirePressed();
 	void OnActionFireReleased();
@@ -97,9 +110,13 @@ public:
 	void OnActionZoomIn(); // 확대 (FOV 30)
 	void OnActionZoomOut(); // 축소 (FOV 90)
 
+
+
 private:
 	FVector direction;
-	float WalkSpeed = 600.f;
+	float WalkSpeed = 400.f;
+	float RunSpeed = 600.f;
+	float CrouchSpeed = 200.f;
 
 	FTimerHandle FireTimerHandle;
 
