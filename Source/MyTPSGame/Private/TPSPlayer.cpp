@@ -290,20 +290,6 @@ void ATPSPlayer::OnActionFirePressed()
 				enemy->EnemyFSM->OnDamageProcess(1);
 				/*UEnemyFSM* fsm = Cast<UEnemyFSM>(enemy->GetDefaultSubobjectByName(TEXT("Enemy FSM")));
 				fsm->OnDamageProcess(1);*/
-
-
-			/*if (FMath::RandRange(0, 100) > 50)
-				{
-					enemy->OnMyDamage(TEXT("Damage0"));
-				}
-				else
-				{
-					enemy->OnMyDamage(TEXT("Damage1"));
-				}*/	
-
-				int index = FMath::RandRange(0, 1);
-				FString SectionName = FString::Printf(TEXT("Damage%d"), index);
-				enemy->OnMyDamage(FName(*SectionName));
 			}
 			
 			 

@@ -32,6 +32,9 @@ public:
 	UPROPERTY()
 	class AEnemy* owner;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnemyDieEnd;
+
 	UFUNCTION()
 	void AnimNotify_OnHit();
 };

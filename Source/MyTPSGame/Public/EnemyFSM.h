@@ -42,6 +42,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackDelayTime = 3.f;
 
+	class AAIController* AIowner;
+
 	void OnDamageProcess(int DamageValue);
 
 	// 에너미 체력
@@ -49,6 +51,7 @@ public:
 	int maxHP = 2;
 
 	void OnHitEvent();
+
 
 private:
 	void TickIdle();

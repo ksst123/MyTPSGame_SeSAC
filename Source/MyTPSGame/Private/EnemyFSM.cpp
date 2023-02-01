@@ -8,6 +8,7 @@
 #include "../MyTPSGame.h"
 #include "Components/CapsuleComponent.h"
 #include "EnemyAnim.h"
+#include "AIController.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -28,9 +29,12 @@ void UEnemyFSM::BeginPlay()
 	state = EEnemyState::IDLE;
 	
 	owner = Cast<AEnemy>(GetOwner());
+	AIowner = Cast<AAIController>(owner->GetController());
 
 	// 생성 시 현재 체력을 최대 체력으로 설정
 	currentHP = maxHP;
+
+	
 }
 
 
@@ -116,7 +120,9 @@ void UEnemyFSM::TickMove()
 	// 목적지를 향하는 방향 생성
 	FVector dir = player->GetActorLocation() - owner->GetActorLocation();
 	// 목적지로 이동
-	owner->AddMovementInput(dir.GetSafeNormal());
+	AIowner->MoveToLocation(player->GetActorLocation());
+	// owner->AddMovementInput(dir.GetSafeNormal()); // 직선 이동만 가능한 이동
+
 	// 목적지와의 거리가 공격 가능한 거리라면
 	// float dist = player->GetDistanceTo(owner);
 	// float dist = dir.Size();
@@ -177,6 +183,12 @@ void UEnemyFSM::TickDamage()
 
 void UEnemyFSM::TickDie()
 {
+	// 만약 Die 애니메이션이 끝나지 않았다면
+	if(!owner->EnemyAnim->bEnemyDieEnd)
+	{
+		return;
+	}
+
 	currentTime += GetWorld()->GetDeltaSeconds();
 
 	FVector p0 = owner->GetActorLocation();
@@ -193,11 +205,15 @@ void UEnemyFSM::SetState(EEnemyState next)
 {
 	state = next;
 	owner->EnemyAnim->state = next;
+	// 애니메이션 재생 시간 보장을 위한 currentTime 초기화
+	currentTime = 0;
 }
 
 // 플레이어에게 맞았다.
 void UEnemyFSM::OnDamageProcess(int DamageValue)
 {
+	AIowner->StopMovement();
+
 	// 체력을 소모
 	currentHP -= DamageValue;
 	// 체력이 0이 되면
@@ -205,12 +221,28 @@ void UEnemyFSM::OnDamageProcess(int DamageValue)
 	{
 		// 에너미 사망
 		SetState(EEnemyState::DIE);
+		owner->EnemyAnim->bEnemyDieEnd = false;
+		// 애님 몽타주의 Die 섹션을 플레이
+		owner->OnMyDamage("Die");
+
 		owner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else // 그렇지 않으면
 	{
 		// Damage 한다
 		SetState(EEnemyState::DAMAGE);
+
+		int index = FMath::RandRange(0, 1);
+		FString SectionName = FString::Printf(TEXT("Damage%d"), index);
+		owner->OnMyDamage(FName(*SectionName));
+		/*if (FMath::RandRange(0, 100) > 50)
+		{
+			enemy->OnMyDamage(TEXT("Damage0"));
+		}
+		else
+		{
+			enemy->OnMyDamage(TEXT("Damage1"));
+		}*/
 	}
 
 
