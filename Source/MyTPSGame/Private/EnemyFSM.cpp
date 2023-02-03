@@ -9,6 +9,8 @@
 #include "Components/CapsuleComponent.h"
 #include "EnemyAnim.h"
 #include "AIController.h"
+#include "NavigationSystem.h"
+#include "PathManager.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -27,14 +29,19 @@ void UEnemyFSM::BeginPlay()
 	Super::BeginPlay();
 
 	state = EEnemyState::IDLE;
+	moveSubState = EEnemyMoveSubState::PATROL;
 	
 	owner = Cast<AEnemy>(GetOwner());
 	AIowner = Cast<AAIController>(owner->GetController());
 
 	// 생성 시 현재 체력을 최대 체력으로 설정
-	currentHP = maxHP;
+	owner->currentHP = owner->maxHP;
 
-	
+	// 태어날 때 랜덤 목적지를 정함
+	UpdateRandomLocation(RandomLocationRadius, RandomLocation);
+
+	// 레벨에 존재하는 PathManager를 찾는다.
+	PathManager = Cast<APathManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APathManager::StaticClass()));
 }
 
 
@@ -117,11 +124,25 @@ void UEnemyFSM::TickIdle()
 // 공격 상태로 전이
 void UEnemyFSM::TickMove()
 {
+	switch (moveSubState)
+	{
+	case EEnemyMoveSubState::PATROL:
+		TickPatrol();
+		break;
+	case EEnemyMoveSubState::CHASE:
+		TickChase();
+		break;
+	case EEnemyMoveSubState::OLD_MOVE:
+		TickMoveOldMove();
+		break;
+	}
+
+
+
 	// 목적지를 향하는 방향 생성
 	FVector dir = player->GetActorLocation() - owner->GetActorLocation();
-	// 목적지로 이동
-	AIowner->MoveToLocation(player->GetActorLocation());
-	// owner->AddMovementInput(dir.GetSafeNormal()); // 직선 이동만 가능한 이동
+
+	
 
 	// 목적지와의 거리가 공격 가능한 거리라면
 	// float dist = player->GetDistanceTo(owner);
@@ -215,9 +236,9 @@ void UEnemyFSM::OnDamageProcess(int DamageValue)
 	AIowner->StopMovement();
 
 	// 체력을 소모
-	currentHP -= DamageValue;
+	owner->currentHP -= DamageValue;
 	// 체력이 0이 되면
-	if (currentHP <= 0)
+	if (owner->currentHP <= 0)
 	{
 		// 에너미 사망
 		SetState(EEnemyState::DIE);
@@ -246,4 +267,101 @@ void UEnemyFSM::OnDamageProcess(int DamageValue)
 	}
 
 
+}
+
+bool UEnemyFSM::UpdateRandomLocation(float radius, FVector& OutLocation)
+{
+	UNavigationSystemV1* ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	FNavLocation navLoc;
+	bool result = ns->GetRandomReachablePointInRadius(owner->GetActorLocation(), radius, navLoc);
+	if (result)
+	{
+		OutLocation = navLoc.Location;
+	}
+
+	return result;
+}
+
+void UEnemyFSM::TickMoveOldMove()
+{
+	// 내가 갈 수 있는 길 위에 타겟이 있는가?
+	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	FPathFindingQuery query;
+	FAIMoveRequest request;
+	request.SetAcceptanceRadius(5.f); // 길을 만드는 범위가 아닌, 도착지에 도착했는지 여부를 확인할 때 도착지 크기에 여유를 주기 위해
+	request.SetGoalLocation(player->GetActorLocation());
+	AIowner->BuildPathfindingQuery(request, query);
+	FPathFindingResult result = NavSystem->FindPathSync(query);
+
+	// 갈 수 있다면 
+	if (result.Result == ENavigationQueryResult::Success)
+	{
+		// 타겟쪽으로 이동
+		AIowner->MoveToLocation(player->GetActorLocation());
+	}
+	// 갈 수 없다면 
+	else
+	{
+		// 무작위로 위치를 하나 선정해서 그곳으로 이동
+		// UpdateRandomLocation(RandomLocationRadius, RandomLocation);
+		auto r = AIowner->MoveToLocation(RandomLocation);
+		if (r == EPathFollowingRequestResult::AlreadyAtGoal || r == EPathFollowingRequestResult::Failed)
+		{
+			// 만약 그 무작위 위치에 도착했다면, 다시 무작위로 위치를 재선정
+			UpdateRandomLocation(RandomLocationRadius, RandomLocation);
+
+			// 이동
+			// AIowner->MoveToLocation(player->GetActorLocation());
+		}
+	}
+
+
+	// owner->AddMovementInput(dir.GetSafeNormal()); // 직선 이동만 가능한 이동
+}
+
+// 순찰할 위치를 순서대로 이동한다.
+void UEnemyFSM::TickPatrol()
+{
+	FVector PatrolTarget = PathManager->WayPoints[WayIndex]->GetActorLocation();
+
+	// 순방향 순찰
+	/*int ArrayLength = PathManager->WayPoints.Num();
+	WayIndex = (WayIndex + 1) % ArrayLength;*/
+
+	// 역방향 순찰
+	/*int ArrayLength = PathManager->WayPoints.Num();
+	WayIndex = (WayIndex + ArrayLength - 1) % ArrayLength;*/
+
+	// 순방향 순찰
+	auto result = AIowner->MoveToLocation(PatrolTarget);
+	// 만약 순찰 위치에 도착했다면
+	if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
+	{
+		// 순찰할 위치를 다음 위치로 갱신
+		WayIndex++;
+		// WayIndex의 값이 PathManager->WayPoints의 크기 이상이면
+		if (WayIndex >= PathManager->WayPoints.Num())
+		{
+			// WayIndex의 값을 0으로 한다.
+			WayIndex = 0;
+		}
+	}
+
+	//역방향 순찰
+	//if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
+	//{
+	//	// 순찰할 위치를 다음 위치로 갱신
+	//	WayIndex--;
+	//	// WayIndex의 값이 PathManager->WayPoints의 크기 이상이면
+	//	if (WayIndex < 0)
+	//	{
+	//		// WayIndex의 값을 0으로 한다.
+	//		WayIndex = PathManager->WayPoints.Num() - 1;
+	//	}
+	//}
+}
+
+void UEnemyFSM::TickChase()
+{
 }

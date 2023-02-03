@@ -32,6 +32,12 @@ public:
 	UPROPERTY()
 	class UEnemyAnim* EnemyAnim;
 
+	// 에너미 체력
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int currentHP;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int maxHP = 2;
+
 	// 선언과 호출은 C++에서, 구현은 블루프린트에서 하는 함수
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnMyDamage(FName SectionName); // player가 enemy를 공격

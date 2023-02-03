@@ -55,6 +55,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* SniperMeshComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 MaxGunAmmo = 20;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 GunAmmo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 MaxSniperAmmo = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 SniperAmmo;
+
 	// 위젯 공장에서 위젯을 생성(Crosshair, Sniper)
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UUserWidget> CrosshairFactory;
@@ -96,6 +106,9 @@ public:
 	void OnActionJump();
 	void OnActionFirePressed();
 	void OnActionFireReleased();
+	void OnActionReload();
+
+
 
 	// 1번 키와 2번 키에 대한 총교체 입력처리 함수
 	void OnActionGrenade();
@@ -103,6 +116,9 @@ public:
 	
 	// 실제로 총알을 발사하는 함수
 	void DoFire();
+
+	void OnMyGunReload();
+	void OnMySniperReload();
 
 	void ChooseGun(bool bGrenade);
 

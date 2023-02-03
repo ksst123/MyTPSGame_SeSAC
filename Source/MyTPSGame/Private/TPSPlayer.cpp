@@ -119,6 +119,9 @@ void ATPSPlayer::BeginPlay()
 	// Sniper Gun일 때 ZoomIn을 하면 CrosshairUI X, SniperUI O
 	// Sniper Gun일 때 ZoomOut을 하면 CrosshairUI O, SniperUI X
 	// 기본총(Grenade)를 선택하면 CrosshairUI O, SniperUI X
+
+	GunAmmo = MaxGunAmmo;
+	SniperAmmo = MaxSniperAmmo;
 }
 
 // Called every frame
@@ -175,6 +178,10 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	// 살금살금 걷기 액션 연결
 	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ATPSPlayer::OnActionCrouchPressed);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchPressed);
+
+	// 재장전
+	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &ATPSPlayer::OnActionReload);
+
 }
 
 void ATPSPlayer::OnAxisHorizontal(float value)
@@ -226,6 +233,34 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
+	// 총알 남아있는지 검증
+	if (bChooseGrenadeGun)
+	{
+		// 총알이 남아있다면 1발 차감하고
+		if (GunAmmo > 0)
+		{
+			GunAmmo--;
+		}
+		// 그렇지 않으면 총을 쏘지 못한다.
+		else
+		{ 
+			return;
+		}
+	}
+	else
+	{
+		// 총알이 남아있다면 1발 차감하고
+		if (SniperAmmo > 0)
+		{ 
+			SniperAmmo--; 
+		}
+		// 그렇지 않으면 총을 쏘지 못한다.
+		else
+		{ 
+			return;
+		}
+	}
+
 	// 카메라 진동
 	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 
@@ -245,7 +280,7 @@ void ATPSPlayer::OnActionFirePressed()
 
 	// 총쏘는 애니메이션 재생
 	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
-	anim->OnFire();
+	anim->OnFire(TEXT("Default"));
 
 	// 총소리 재생
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, GetActorLocation());
@@ -276,9 +311,6 @@ void ATPSPlayer::OnActionFirePressed()
 		// 만약 충돌한 것이 있다면
 		if (bHit)
 		{
-
-
-
 			// 총알 충돌 위치에 이펙트 생성
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BulletEffectFactory, HitInfo.ImpactPoint);
 			
@@ -325,6 +357,19 @@ void ATPSPlayer::OnActionGrenade()
 void ATPSPlayer::OnActionSniper()
 {
 	ChooseGun(SNIPER_GUN);
+}
+
+void ATPSPlayer::OnActionReload()
+{
+	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
+	if (bChooseGrenadeGun)
+	{
+		anim->OnFire(TEXT("GunReload"));
+	}
+	else
+	{
+		anim->OnFire(TEXT("SniperReload"));
+	}
 }
 
 void ATPSPlayer::DoFire()
@@ -392,4 +437,14 @@ void ATPSPlayer::OnActionZoomOut()
 	// CrosshairUI 를 안 보이게 하고, 확대경을 보이게 하고 싶다
 	CrosshairUI->AddToViewport();
 	SniperUI->RemoveFromParent();
+}
+
+void ATPSPlayer::OnMyGunReload()
+{
+	GunAmmo = MaxGunAmmo;
+}
+
+void ATPSPlayer::OnMySniperReload()
+{
+	SniperAmmo = MaxSniperAmmo;
 }

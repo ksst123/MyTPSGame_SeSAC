@@ -25,7 +25,21 @@ void UTPSPlayerAnim::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
-void UTPSPlayerAnim::OnFire()
+void UTPSPlayerAnim::OnFire(FName sectionName)
 {
-	Montage_Play(FireMontage);
+	ATPSPlayer* owner = Cast<ATPSPlayer>(TryGetPawnOwner());
+	owner->PlayAnimMontage(FireMontage, 1, sectionName);
+	// Montage_Play(FireMontage);
+}
+
+void UTPSPlayerAnim::OnGunReload()
+{
+	ATPSPlayer* owner = Cast<ATPSPlayer>(TryGetPawnOwner());
+	owner->OnMyGunReload();
+}
+
+void UTPSPlayerAnim::OnSniperReload()
+{
+	ATPSPlayer* owner = Cast<ATPSPlayer>(TryGetPawnOwner());
+	owner->OnMySniperReload();
 }

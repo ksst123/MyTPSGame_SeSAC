@@ -30,5 +30,11 @@ public:
 	class UAnimMontage* FireMontage;
 
 	UFUNCTION(BlueprintCallable)
-	void OnFire();
+	void OnFire(FName sectionName);
+
+	UFUNCTION(BlueprintCallable)
+	void OnGunReload();
+
+	UFUNCTION(BlueprintCallable)
+	void OnSniperReload();
 };

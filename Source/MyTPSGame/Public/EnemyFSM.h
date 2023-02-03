@@ -16,6 +16,14 @@ enum class EEnemyState : uint8 // 0~255
 	DIE,
 };
 
+UENUM(BlueprintType)
+enum class EEnemyMoveSubState : uint8
+{
+	PATROL,
+	CHASE,
+	OLD_MOVE,
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYTPSGAME_API UEnemyFSM : public UActorComponent
 {
@@ -35,6 +43,8 @@ public:
 
 	EEnemyState state;
 
+	EEnemyMoveSubState	moveSubState;
+
 	// 공격 가능 거리 = 에너미가 이동하다가 멈추는 조건값
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackRange = 200.f;
@@ -42,16 +52,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackDelayTime = 3.f;
 
+	UPROPERTY(EditAnywhere)
+	float RandomLocationRadius = 500.f;
+
+	UPROPERTY()
 	class AAIController* AIowner;
+
+	UPROPERTY()
+	class ATPSPlayer* player; // caching
+
+	UPROPERTY()
+	class AEnemy* owner;
+
+	FVector RandomLocation;
+
+	bool UpdateRandomLocation(float radius, FVector& OutLocation);
 
 	void OnDamageProcess(int DamageValue);
 
-	// 에너미 체력
-	int currentHP;
-	int maxHP = 2;
 
 	void OnHitEvent();
 
+	// PathManager를 알고
+	UPROPERTY()
+	class APathManager* PathManager;
+	// PathManager의 WayPoints를 이용해서 순찰할 목적지를 정한다.
+	int32 WayIndex;
 
 private:
 	void TickIdle();
@@ -59,12 +85,13 @@ private:
 	void TickAttack();
 	void TickDamage();
 	void TickDie();
+	void TickMoveOldMove();
+	void TickPatrol();
+	void TickChase();
 
 	void SetState(EEnemyState next);
 
-	class ATPSPlayer* player; // caching
 
-	class AEnemy* owner;
 
 	float currentTime = 0.f;
 
