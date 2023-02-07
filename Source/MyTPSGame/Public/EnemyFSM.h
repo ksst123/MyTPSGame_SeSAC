@@ -79,6 +79,14 @@ public:
 	// PathManager의 WayPoints를 이용해서 순찰할 목적지를 정한다.
 	int32 WayIndex;
 
+	// Patrol 시 감지 거리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DetectDistance = 500.f;
+
+	// Chase 시 추적 포기 거리 : 감지 거리보다 커야 한다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AbandonDistance = 800.f;
+
 private:
 	void TickIdle();
 	void TickMove();

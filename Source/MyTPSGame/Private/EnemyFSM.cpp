@@ -42,6 +42,8 @@ void UEnemyFSM::BeginPlay()
 
 	// 레벨에 존재하는 PathManager를 찾는다.
 	PathManager = Cast<APathManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APathManager::StaticClass()));
+
+	WayIndex = FMath::RandRange(0, PathManager->WayPoints.Num() - 1);
 }
 
 
@@ -136,25 +138,6 @@ void UEnemyFSM::TickMove()
 		TickMoveOldMove();
 		break;
 	}
-
-
-
-	// 목적지를 향하는 방향 생성
-	FVector dir = player->GetActorLocation() - owner->GetActorLocation();
-
-	
-
-	// 목적지와의 거리가 공격 가능한 거리라면
-	// float dist = player->GetDistanceTo(owner);
-	// float dist = dir.Size();
-	float dist = FVector::Dist(player->GetActorLocation(), owner->GetActorLocation());
-	if (dist < AttackRange)
-	{
-		// 공격 상태로 전이
-		SetState(EEnemyState::ATTACK);
-	}
-	
-	
 }
 
 // 공격 타이밍
@@ -334,19 +317,19 @@ void UEnemyFSM::TickPatrol()
 	WayIndex = (WayIndex + ArrayLength - 1) % ArrayLength;*/
 
 	// 순방향 순찰
-	auto result = AIowner->MoveToLocation(PatrolTarget);
-	// 만약 순찰 위치에 도착했다면
-	if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
-	{
-		// 순찰할 위치를 다음 위치로 갱신
-		WayIndex++;
-		// WayIndex의 값이 PathManager->WayPoints의 크기 이상이면
-		if (WayIndex >= PathManager->WayPoints.Num())
-		{
-			// WayIndex의 값을 0으로 한다.
-			WayIndex = 0;
-		}
-	}
+	//auto result = AIowner->MoveToLocation(PatrolTarget);
+	//// 만약 순찰 위치에 도착했다면
+	//if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
+	//{
+	//	// 순찰할 위치를 다음 위치로 갱신
+	//	WayIndex++;
+	//	// WayIndex의 값이 PathManager->WayPoints의 크기 이상이면
+	//	if (WayIndex >= PathManager->WayPoints.Num())
+	//	{
+	//		// WayIndex의 값을 0으로 한다.
+	//		WayIndex = 0;
+	//	}
+	//}
 
 	//역방향 순찰
 	//if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
@@ -360,8 +343,55 @@ void UEnemyFSM::TickPatrol()
 	//		WayIndex = PathManager->WayPoints.Num() - 1;
 	//	}
 	//}
+
+
+	// 랜덤 순서 순찰
+	auto result = AIowner->MoveToLocation(PatrolTarget);
+	// 만약 순찰 위치에 도착했다면
+	if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed)
+	{
+		WayIndex = FMath::RandRange(0, PathManager->WayPoints.Num() - 1);
+	}
+	
+
+	// 타겟과의 거리를 측정
+	// float Distance = owner->GetActorLocation().Size() - player->GetActorLocation().Size();
+	// UKismetSystemLibrary::SphereOverlapActors(GetWorld(), owner->...
+	float Distance = owner->GetDistanceTo(player);
+
+	// 만약 타겟이 감지거리 안에 있다면
+	if(Distance <= DetectDistance)
+	{
+		// Chase 상태로 전이
+		moveSubState = EEnemyMoveSubState::CHASE;
+	}
+	
 }
 
+
+// 공격 상태로 전이
 void UEnemyFSM::TickChase()
 {
+	// 목적지를 향해 이동
+	AIowner->MoveToLocation(player->GetActorLocation());
+
+
+	// 목적지를 향하는 방향 생성
+	FVector dir = player->GetActorLocation() - owner->GetActorLocation();
+
+	// 목적지와의 거리를 재고
+	// float dist = player->GetDistanceTo(owner);
+	// float dist = dir.Size();
+	float dist = FVector::Dist(player->GetActorLocation(), owner->GetActorLocation());
+
+	// 목적지와의 거리가 공격 가능한 거리라면
+	if (dist < AttackRange)
+	{
+		// 공격 상태로 전이
+		SetState(EEnemyState::ATTACK);
+	}
+	else if(dist > AbandonDistance) // 그렇지 않고 포기 거리보다 멀어졌다면
+	{
+		moveSubState = EEnemyMoveSubState::PATROL;
+	}
 }
