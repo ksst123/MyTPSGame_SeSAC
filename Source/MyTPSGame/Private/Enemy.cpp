@@ -30,6 +30,9 @@ AEnemy::AEnemy()
 	{
 		GetMesh()->SetAnimInstanceClass(TempAnimInst.Class);
 	}
+
+
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 

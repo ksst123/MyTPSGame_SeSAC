@@ -39,7 +39,13 @@ public:
 	FTimerHandle EnemySpawnTimerHandle;
 	// - 적 팩토리
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AEnemy> EnemyFactory;
+	TArray<TSubclassOf<class AEnemy>> EnemyFactory;
+	
 	// 적 스폰 기능
 	void SpawnEnemy();
+
+	// 현재까지 스폰된 개수
+	int32 CurrentSpawnCount;
+	// 목표 스폰 개수
+	int32 GoalSpawnCount;
 };

@@ -22,6 +22,9 @@ void UTPSPlayerAnim::NativeUpdateAnimation(float DeltaSeconds)
 
 		// IsJumping을 알고 싶다.
 		IsJumping = owner->GetCharacterMovement()->IsFalling();
+
+		// IsCrouching을 알고 싶다.
+		IsCrouching = owner->GetCharacterMovement()->IsCrouching();
 	}
 }
 

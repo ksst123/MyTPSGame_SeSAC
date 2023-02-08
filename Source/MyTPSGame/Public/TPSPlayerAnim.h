@@ -26,6 +26,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool IsJumping;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsCrouching;
+
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* FireMontage;
 

@@ -177,7 +177,7 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 	// 살금살금 걷기 액션 연결
 	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ATPSPlayer::OnActionCrouchPressed);
-	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchPressed);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchReleased);
 
 	// 재장전
 	PlayerInputComponent->BindAction(TEXT("Reload"), IE_Pressed, this, &ATPSPlayer::OnActionReload);
@@ -218,12 +218,14 @@ void ATPSPlayer::OnActionRunReleased()
 
 void ATPSPlayer::OnActionCrouchPressed()
 {
-	GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	Crouch();
 }
 
 void ATPSPlayer::OnActionCrouchReleased()
-{
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+{	
+	GetCharacterMovement()->MaxWalkSpeedCrouched = WalkSpeed;
+	UnCrouch();
 }
 
 void ATPSPlayer::OnActionJump()
