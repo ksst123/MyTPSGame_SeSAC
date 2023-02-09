@@ -65,11 +65,10 @@ public:
 	class AEnemy* owner;
 
 	FVector RandomLocation;
-
+	
 	bool UpdateRandomLocation(float radius, FVector& OutLocation);
 
 	void OnDamageProcess(int DamageValue);
-
 
 	void OnHitEvent();
 

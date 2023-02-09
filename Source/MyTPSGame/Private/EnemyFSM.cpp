@@ -80,6 +80,7 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	}
 }
 
+// enemy -> player 공격하는 순간
 void UEnemyFSM::OnHitEvent()
 {
 	owner->EnemyAnim->bAttackPlay = false;
@@ -88,7 +89,7 @@ void UEnemyFSM::OnHitEvent()
 	float dist = player->GetDistanceTo(owner);
 	if (dist <= AttackRange)
 	{
-		PRINT_LOG(TEXT("Enemy is attacking!"));
+		player->OnMyHit(1);
 	}
 }
 
