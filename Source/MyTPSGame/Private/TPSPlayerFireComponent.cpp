@@ -81,6 +81,7 @@ void UTPSPlayerFireComponent::OnActionFirePressed()
 		if (GunAmmo > 0)
 		{
 			GunAmmo--;
+			owner->OnMyGrenadeGunAmmoUpdate(GunAmmo, MaxGunAmmo);
 		}
 		// 그렇지 않으면 총을 쏘지 못한다.
 		else
@@ -94,6 +95,7 @@ void UTPSPlayerFireComponent::OnActionFirePressed()
 		if (SniperAmmo > 0)
 		{
 			SniperAmmo--;
+			owner->OnMySniperGunAmmoUpdate(SniperAmmo, MaxSniperAmmo);
 		}
 		// 그렇지 않으면 총을 쏘지 못한다.
 		else
@@ -244,6 +246,8 @@ void UTPSPlayerFireComponent::ChooseGun(bool bGrenade)
 	bChooseGrenadeGun = bGrenade;
 	owner->GunMeshComponent->SetVisibility(bGrenade);
 	owner->SniperMeshComponent->SetVisibility(!bGrenade);
+
+	owner->OnMyChooseGun(bChooseGrenadeGun);
 }
 
 void UTPSPlayerFireComponent::OnActionZoomIn()
@@ -283,9 +287,11 @@ void UTPSPlayerFireComponent::OnActionZoomOut()
 void UTPSPlayerFireComponent::OnMyGunReload()
 {
 	GunAmmo = MaxGunAmmo;
+	owner->OnMyGrenadeGunAmmoUpdate(GunAmmo, MaxGunAmmo);
 }
 
 void UTPSPlayerFireComponent::OnMySniperReload()
 {
 	SniperAmmo = MaxSniperAmmo;
+	owner->OnMySniperGunAmmoUpdate(SniperAmmo, MaxSniperAmmo);
 }

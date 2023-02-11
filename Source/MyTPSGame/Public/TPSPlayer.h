@@ -51,10 +51,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UStaticMeshComponent* SniperMeshComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UTPSPlayerMoveComponent* MoveComponent;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UTPSPlayerFireComponent* FireComponent;
 
 	UPROPERTY(EditAnywhere)
@@ -70,6 +70,17 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnMyHit(int damage);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMyGameOver();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMyChooseGun(bool IsGrenadeGun);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMyGrenadeGunAmmoUpdate(int32 current, int32 max);
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnMySniperGunAmmoUpdate(int32 current, int32 max);
 	// =================================================
 
 };

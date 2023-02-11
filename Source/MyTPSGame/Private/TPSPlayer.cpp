@@ -138,4 +138,12 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 void ATPSPlayer::OnMyHit_Implementation(int damage)
 {
 	CurrentHP -= damage;
+
+	// 만약 체력이 0 이하라면
+	if(CurrentHP <= 0)
+	{
+		// 게임오버 처리
+		OnMyGameOver();
+	}
+	
 }
